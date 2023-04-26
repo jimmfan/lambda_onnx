@@ -46,6 +46,8 @@ def put_order(order_id, order_data):
     except Exception as e:
         print(f"Failed to put order: {e}")
 
+    
+
 def update_order(order_id, order_data):
     # Update an existing order item in DynamoDB
     try:
@@ -63,3 +65,20 @@ def update_order(order_id, order_data):
         )
     except Exception as e:
         print(f"Failed to update order: {e}")
+
+def put_item(id, complaints):
+    try:
+        response = orders_table.put_item(
+            Item={
+                'id': id,
+                'complaints': complaints,
+            },
+            ConditionExpression='attribute_not_exists(id) and (attribute_not_exists(complaints) or not contains(complaints, :complaints))',
+            ExpressionAttributeValues={
+                ':complaints': complaints,
+            }
+        )
+        return {"message": f"Item with id {id} added to table"}
+
+    except Exception as e:
+        return {"message": f"Error: {e}"}
