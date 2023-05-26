@@ -1,3 +1,5 @@
+name: Deploy Layer
+
 on:
   push:
     branches:
@@ -19,7 +21,23 @@ jobs:
       - name: Install dependencies
         run: pip install awscli
 
-      - name: Build and deploy Lambda layer
+      - name: Create xray_layer.zip
+        run: |
+          mkdir lambda_layer
+          pip install -t lambda_layer aws-xray-sdk
+          zip -r xray_layer.zip lambda_layer
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Upload xray_layer.zip to S3
+        run: aws s3 cp xray_layer.zip s3://my-layer-bucket/xray_layer.zip
+
+      - name: Deploy Lambda layer using Terraform
         run: |
           terraform init
           terraform apply -auto-approve
